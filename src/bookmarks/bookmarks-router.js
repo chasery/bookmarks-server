@@ -30,8 +30,21 @@ bookmarksRouter
 
     res.json(bookmark);
   })
-  .delete(bodyParser, (req, res) => {
+  .delete((req, res) => {
     // Handle request to delete given bookmark
+    const { id } = req.params;
+    const bookmarkIndex = bookmarks.findIndex((b) => b.id == id);
+
+    if (bookmarkIndex === -1) {
+      logger.error(`Bookmark with id ${id} not found.`);
+      return res.status(404).send("Not found");
+    }
+
+    bookmarks.splice(bookmarkIndex, 1);
+
+    logger.info(`Bookmark with id ${id} deleted.`);
+
+    res.status(204).end();
   });
 
 module.exports = bookmarksRouter;
