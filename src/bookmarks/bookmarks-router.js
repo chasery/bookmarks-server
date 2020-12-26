@@ -20,6 +20,15 @@ bookmarksRouter
   .route("/bookmarks/:id")
   .get((req, res) => {
     // Handle request to get given boomark
+    const { id } = req.params;
+    const bookmark = bookmarks.find((b) => b.id == id);
+
+    if (!bookmark) {
+      logger.error(`Bookmark with id ${id} not found.`);
+      return res.status(404).send("Bookmark Not Found");
+    }
+
+    res.json(bookmark);
   })
   .delete(bodyParser, (req, res) => {
     // Handle request to delete given bookmark
