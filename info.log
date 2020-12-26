@@ -5,3 +5,10 @@
 {"message":"Bookmark with id 6 not found.","level":"error"}
 {"message":"Bookmark with id 6 not found.","level":"error"}
 {"message":"Bookmark with id 5 deleted.","level":"info"}
+{"message":"Url must be a min length of 5 and begin with http(s)://","level":"error"}
+{"message":"Bookmark with id 1003694e-76ea-4f77-ad10-cfb07bfd3b1e created","level":"info"}
+{"message":"Bookmark with id 00758df3-9b8c-441a-aaae-3ce998882d62 created","level":"info"}
+{"message":"Title is required","level":"error"}
+{"message":"Bookmark with id 880a2987-8486-4e8c-bbfb-65566144efb4 created","level":"info"}
+{"message":"Invalid rating 'five' supplied","level":"error"}
+{"message":"Invalid url 'httHerodhsahadhad8' supplied","level":"error"}
