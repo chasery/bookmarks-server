@@ -1,6 +1,7 @@
 const express = require("express");
 const { v4: uuid } = require("uuid");
 const logger = require("../logger");
+const bookmarks = require("../store");
 
 const bookmarksRouter = express.Router();
 const bodyParser = express.json();
@@ -9,6 +10,7 @@ bookmarksRouter
   .route("/bookmarks")
   .get((req, res) => {
     // Handle request to get all bookmarks
+    res.json(bookmarks);
   })
   .post(bodyParser, (req, res) => {
     // Handle request to create a new bookmark
