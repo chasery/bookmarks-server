@@ -1,6 +1,6 @@
 # Bookmarks Server!
 
-An express app for the bookmarks-app.
+An express server for the bookmarks-app.
 
 ## Scripts
 
