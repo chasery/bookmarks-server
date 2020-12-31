@@ -2,11 +2,22 @@ const express = require("express");
 const { v4: uuid } = require("uuid");
 const { isWebUri } = require("valid-url");
 const logger = require("../logger");
+const xss = require("xss");
 // const bookmarks = require("../store");
 const BookmarksService = require("../bookmarks-service");
 
 const bookmarksRouter = express.Router();
 const bodyParser = express.json();
+
+const santizeBoomark = (bookmark) => {
+  return {
+    id: bookmark.id,
+    title: xss(bookmark.title),
+    url: xss(bookmark.url),
+    rating: bookmark.rating,
+    description: xss(bookmark.description),
+  };
+};
 
 bookmarksRouter
   .route("/bookmarks")
@@ -20,54 +31,75 @@ bookmarksRouter
       })
       .catch(next);
   })
-  .post(bodyParser, (req, res) => {
+  .post(bodyParser, (req, res, next) => {
     // Handle request to create a new bookmark (Title, URL, Rating, Description)
-    // Req input is Title, URL, and Rating
-    for (const field of ["title", "url", "rating"]) {
-      if (!req.body[field]) {
-        logger.error(`${field} is required`);
-        return res.status(400).send(`'${field}' is required`);
-      }
-    }
-
+    const knexInstance = req.app.get("db");
     const { title, url, rating, description } = req.body;
+    const newBookmark = { title, url, rating, description };
 
-    // Url validation
-    if (!isWebUri(url)) {
-      logger.error(`Invalid url '${url}' supplied`);
-      return res.status(400).send(`'url' must be a valid URL`);
-    }
+    for (const [key, value] of Object.entries(newBookmark))
+      if (key !== "description" && value == null)
+        return res.status(400).json({
+          error: { message: `Missing '${key}' in request body` },
+        });
 
-    // Rating validaiton
-    if (!Number.isInteger(rating) || rating < 0 || rating > 5) {
-      logger.error(`Invalid rating '${rating}' supplied`);
-      return res.status(400).send(`'rating' must be a number between 0 and 5`);
-    }
-
-    const bookmark = {
-      id: uuid(),
-      title,
-      url,
-      rating,
-      description,
-    };
-
-    bookmarks.push(bookmark);
-
-    logger.info(`Bookmark with id ${bookmark.id} created`);
-
-    res
-      .status(201)
-      .location(`http://localhost:8000/bookmarks/${bookmark.id}`)
-      .json(bookmark);
+    BookmarksService.insertBookmark(knexInstance, newBookmark)
+      .then((bookmark) => {
+        res
+          .status(201)
+          .location(`/bookmarks/${bookmark.id}`)
+          .json(santizeBoomark(bookmark));
+      })
+      .catch(next);
   });
+// .post(bodyParser, (req, res) => {
+//   // Handle request to create a new bookmark (Title, URL, Rating, Description)
+//   // Req input is Title, URL, and Rating
+//   for (const field of ["title", "url", "rating"]) {
+//     if (!req.body[field]) {
+//       logger.error(`${field} is required`);
+//       return res.status(400).send(`'${field}' is required`);
+//     }
+//   }
+
+//   const { title, url, rating, description } = req.body;
+
+//   // Url validation
+//   if (!isWebUri(url)) {
+//     logger.error(`Invalid url '${url}' supplied`);
+//     return res.status(400).send(`'url' must be a valid URL`);
+//   }
+
+//   // Rating validaiton
+//   if (!Number.isInteger(rating) || rating < 0 || rating > 5) {
+//     logger.error(`Invalid rating '${rating}' supplied`);
+//     return res.status(400).send(`'rating' must be a number between 0 and 5`);
+//   }
+
+//   const bookmark = {
+//     id: uuid(),
+//     title,
+//     url,
+//     rating,
+//     description,
+//   };
+
+//   bookmarks.push(bookmark);
+
+//   logger.info(`Bookmark with id ${bookmark.id} created`);
+
+//   res
+//     .status(201)
+//     .location(`http://localhost:8000/bookmarks/${bookmark.id}`)
+//     .json(bookmark);
+// });
 
 bookmarksRouter
   .route("/bookmarks/:id")
   .get((req, res, next) => {
     // Handle request to get given boomark
     const knexInstance = req.app.get("db");
-
+    console.log(req.params.id);
     BookmarksService.getBookmarkById(knexInstance, req.params.id)
       .then((bookmark) => {
         if (!bookmark) {

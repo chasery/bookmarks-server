@@ -2,7 +2,10 @@ const { expect } = require("chai");
 const knex = require("knex");
 const supertest = require("supertest");
 const app = require("../src/app");
-const { makeBookmarksArray } = require("./bookmarks-fixtures");
+const {
+  makeBookmarksArray,
+  makeMaliciousArticle,
+} = require("./bookmarks-fixtures");
 
 describe("Bookmarks Endpoint", () => {
   let db;
@@ -70,6 +73,37 @@ describe("Bookmarks Endpoint", () => {
           .get(`/bookmarks/${id}`)
           .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
           .expect(200, expectedBookmark);
+      });
+    });
+  });
+
+  describe.only("POST /bookmarks", () => {
+    context("given a request to POST", () => {
+      it("should return a 201 and response object", () => {
+        const newBookmark = {
+          title: "Google",
+          url: "http://www.google.com",
+          rating: 4,
+          description: "The best search engine ever!",
+        };
+        return supertest(app)
+          .post("/bookmarks")
+          .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
+          .send(newBookmark)
+          .expect((res) => {
+            expect(res.body.title).to.eql(newBookmark.title);
+            expect(res.body.url).to.eql(newBookmark.url);
+            expect(res.body.rating).to.eql(newBookmark.rating);
+            expect(res.body.description).to.eql(newBookmark.description);
+            expect(res.body).to.have.property("id");
+            expect(res.headers.location).to.eql(`/bookmarks/${res.body.id}`);
+          })
+          .then((postRes) =>
+            supertest(app)
+              .get(`/bookmarks/${postRes.body.id}`)
+              .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
+              .expect(postRes.body)
+          );
       });
     });
   });
