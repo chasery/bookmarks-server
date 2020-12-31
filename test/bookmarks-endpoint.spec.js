@@ -77,7 +77,7 @@ describe("Bookmarks Endpoint", () => {
     });
   });
 
-  describe.only("POST /bookmarks", () => {
+  describe("POST /bookmarks", () => {
     context("given a request to POST", () => {
       it("should return a 201 and response object", () => {
         const newBookmark = {
@@ -104,6 +104,28 @@ describe("Bookmarks Endpoint", () => {
               .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
               .expect(postRes.body)
           );
+      });
+    });
+
+    const requiredFields = ["title", "url", "rating"];
+
+    requiredFields.forEach((field) => {
+      const newBookmark = {
+        title: "Google",
+        url: "http://www.google.com",
+        rating: 4,
+      };
+
+      it(`responds with 400 and an error message when the '${field}' is missing`, () => {
+        delete newBookmark[field];
+
+        return supertest(app)
+          .post("/bookmarks")
+          .set("Authorization", `Bearer ${process.env.API_TOKEN}`)
+          .send(newBookmark)
+          .expect(400, {
+            error: { message: `Missing '${field}' in request body` },
+          });
       });
     });
   });
